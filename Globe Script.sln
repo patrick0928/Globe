@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29102.190
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Globe Script", "Globe Script\Globe Script.csproj", "{467C96B8-1FF4-4210-825F-4BC1BB19978F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{467C96B8-1FF4-4210-825F-4BC1BB19978F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{467C96B8-1FF4-4210-825F-4BC1BB19978F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{467C96B8-1FF4-4210-825F-4BC1BB19978F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{467C96B8-1FF4-4210-825F-4BC1BB19978F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {49AD3525-F99F-4535-96A7-91F95DECF0E2}
+	EndGlobalSection
+EndGlobal
