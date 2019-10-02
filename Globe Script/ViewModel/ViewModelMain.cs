@@ -1,13 +1,12 @@
-﻿using System;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Windows;
-using System.Runtime.InteropServices;
+﻿
+using Globe_Script.Helper;
+using System;
 using System.Diagnostics;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using Globe_Script.ViewModel;
+using System.Windows;
 using System.Windows.Threading;
 
 namespace Globe_Script.ViewModel
@@ -17,6 +16,10 @@ namespace Globe_Script.ViewModel
         [DllImport("user32.dll")]
         static extern bool SetForegroundWindow(IntPtr hWnd);
 
+        [DllImport("User32")]
+        private static extern int ShowWindow(int hwnd, int nCmdShow);
+        private const int SW_MAXIMIZE = 3;
+
         #region #global variables
 
         ServiceController serviceController = new ServiceController();
@@ -25,6 +28,7 @@ namespace Globe_Script.ViewModel
         public RelayCommand SubmitCommand { get; set; }
         public RelayCommand UndoCommand { get; set; }
         public RelayCommand SaveCommand { get; set; }
+        string action;
         string _reLoc;
         string _name;
         string _nameText;
@@ -41,6 +45,7 @@ namespace Globe_Script.ViewModel
         bool _isEnable;
         bool _isEditMode;
         int index = 0, poIndex = 0, inv = 0;
+        int workIndex = 0;
         #endregion
         #region #properties
         public string ReLoc
@@ -222,26 +227,6 @@ namespace Globe_Script.ViewModel
         }
         #endregion
 
-        internal void loadingScreen()
-        {
-            IsVisible = Visibility.Visible;
-
-            System.Threading.Thread.Sleep(51);
-        }
-
-        internal void load()
-        {
-            System.Threading.Thread.Sleep(300);
-        }
-        internal void loadSabreWindow()
-        {
-            System.Threading.Thread.Sleep(800);
-        }
-        internal void loadChecker()
-        {
-            System.Threading.Thread.Sleep(180);
-        }
-
         public string getRemarks(string remarks)
         {
             string result = "";
@@ -290,14 +275,19 @@ namespace Globe_Script.ViewModel
                 ReciveFrom = $"Received From : {pnrMain.ReceivedFrom}";
                 AgentName = recveFrom[0];
 
-                Remarks += string.IsNullOrWhiteSpace(getRemarks("FF34")) ? "" : $"     Cost Center  :  {getRemarks("FF34")} \n";
-                Remarks += string.IsNullOrWhiteSpace(getRemarks("FF35")) ? "" : $"     ID Work Order  :  {getRemarks("FF35")} \n";
-                Remarks += string.IsNullOrWhiteSpace(getRemarks("FF36")) ? "" : $"     Purpose of Trip  :  {getRemarks("FF36")} \n";
-                Remarks += string.IsNullOrWhiteSpace(getRemarks("FF37")) ? "" : $"     Request ID  :  {getRemarks("FF37")} \n";
-                Remarks += string.IsNullOrWhiteSpace(getRemarks("FF37")) ? "" : $"     PO  :  {getRemarks("PO")} \n";
-                Remarks += string.IsNullOrWhiteSpace(getRemarks("INV")) ? "" : $"     Invoice  :  {getRemarks("INV")} \n";
+                try
+                {
+                    Remarks += string.IsNullOrWhiteSpace(getRemarks("FF34")) ? "" : $"     Cost Center  :  {getRemarks("FF34")} \n";
+                    Remarks += string.IsNullOrWhiteSpace(getRemarks("FF35")) ? "" : $"     ID Work Order  :  {getRemarks("FF35")} \n";
+                    Remarks += string.IsNullOrWhiteSpace(getRemarks("FF36")) ? "" : $"     Purpose of Trip  :  {getRemarks("FF36")} \n";
+                    Remarks += string.IsNullOrWhiteSpace(getRemarks("FF37")) ? "" : $"     Request ID  :  {getRemarks("FF37")} \n";
+                    Remarks += string.IsNullOrWhiteSpace(getRemarks("FF37")) ? "" : $"     PO  :  {getRemarks("PO")} \n";
+                    Remarks += string.IsNullOrWhiteSpace(getRemarks("INV")) ? "" : $"     Invoice  :  {getRemarks("INV")} \n";
+                }
+                catch (Exception e) { }
 
                 IsEnable = true;
+
                 if (!string.IsNullOrWhiteSpace(Remarks))
                 {
                     Cost = getRemarks("FF34");
@@ -306,11 +296,10 @@ namespace Globe_Script.ViewModel
                     RqID = getRemarks("FF37");
 
                     index = getRemarks("FF34", 0);
+                    workIndex = getRemarks("FF35", 0);
                     poIndex = getRemarks("PO", 0);
                     //inv = getRemarks("INV", 0);
                     _isEditMode = true;
-
-                    //MessageBoxResult result = MessageBox.Show("Remarks Field already exist", "", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
@@ -331,10 +320,7 @@ namespace Globe_Script.ViewModel
                         Itenerary += $"\n \t  {_details.Origin} / {_details.Destination} / {dateTime}";
                 }
             }
-            catch (Exception e)
-            {
-                //MessageBox.Show("No Itenerary Found");
-            }
+            catch (Exception e){ }
             IsVisible = Visibility.Collapsed;
         }
 
@@ -345,6 +331,8 @@ namespace Globe_Script.ViewModel
 
         public void IgnoreRetrieve()
         {
+            sendKey(" (%{BACKSPACE}) ");
+            sendKey("(%{BACKSPACE})");
             sendKey("I");
             sendKey("{ENTER}");
 
@@ -353,23 +341,17 @@ namespace Globe_Script.ViewModel
             sendKey("{ENTER}");
         }
 
-        public async void SavePnr()
+        public void SavePnr()
         {
-            await Task.Run(() => load());
-            sendKey("E");
-
-            await Task.Run(() => load());
+            sendKey("E");            
             sendKey("R");
-
-            await Task.Run(() => load());
             sendKey("{ENTER}");
 
             clearPnr();
-
             IsVisible = Visibility.Collapsed;
         }
 
-        public async void sendKey(string command)
+        public void sendKey(string command)
         {
             Process[] process = Process.GetProcessesByName("abacusworkspace");
             if (process.Count() > 0)
@@ -379,12 +361,13 @@ namespace Globe_Script.ViewModel
 
                 if (success)
                 {
-                    await Task.Run(() => load());
+                    int hwnd = process[0].MainWindowHandle.ToInt32();
+                    ShowWindow(hwnd, SW_MAXIMIZE);
+
                     System.Windows.Forms.SendKeys.SendWait(command);
                 }
-                else
-                    await Task.Run(() => loadSabreWindow());
             }
+            System.Threading.Thread.Sleep(500);
         }
 
         public void clearPnr()
@@ -417,76 +400,43 @@ namespace Globe_Script.ViewModel
                     edit();
             }
             else
-                submit();
+                submit();             
         }
-
+        
         #region #method submit command
-        public async void submit()
+        public void submit()
         {
-
-            IsVisible = Visibility.Visible;
-
-            await Task.Run(() => load());
-            sendKey("5'");
-
-            await Task.Run(() => load());
-            sendKey("FF34/" + Cost);
-
-            await Task.Run(() => load());
+            IsVisible = Visibility.Visible;            
+            sendKey("5'");             
+            sendKey("FF34/" + Cost);             
             sendKey("{ENTER}");
 
-            await Task.Run(() => load());
-            sendKey("5'");
-
-            await Task.Run(() => load());
-            sendKey("FF35/" + WorkID);
-
-            await Task.Run(() => load());
+            if(!string.IsNullOrWhiteSpace(WorkID))
+            {
+                sendKey("5'");
+                sendKey("FF35/" + WorkID);
+                sendKey("{ENTER}");
+            }
+           
+             
+            sendKey("5'");             
+            sendKey("FF36/" + Trip);             
             sendKey("{ENTER}");
-
-            await Task.Run(() => load());
-            sendKey("5'");
-
-            await Task.Run(() => load());
-            sendKey("FF36/" + Trip);
-
-            await Task.Run(() => load());
+             
+            sendKey("5'");             
+            sendKey("FF37/" + RqID);             
             sendKey("{ENTER}");
-
-            await Task.Run(() => load());
-            sendKey("5'");
-
-            await Task.Run(() => load());
-            sendKey("FF37/" + RqID);
-
-            await Task.Run(() => load());
+             
+            sendKey("5'");             
+            sendKey("PO/" + RqID);             
             sendKey("{ENTER}");
-
-            await Task.Run(() => load());
-            sendKey("5'");
-
-            await Task.Run(() => load());
-            sendKey("PO/" + RqID);
-
-            await Task.Run(() => load());
+            
+            sendKey("5'");             
+            sendKey("INV/DEFAULT");             
             sendKey("{ENTER}");
-
-            await Task.Run(() => load());
-            sendKey("5'");
-
-            await Task.Run(() => load());
-            sendKey("INV/DEFAULT");
-
-            await Task.Run(() => load());
-            sendKey("{ENTER}");
-
-            await Task.Run(() => load());
-            sendKey("6");
-
-            await Task.Run(() => load());
+             
+            sendKey("6");             
             sendKey(AgentName);
-
-            await Task.Run(() => load());
             sendKey("{ENTER}");
 
             evaluateForError("submit");
@@ -494,105 +444,53 @@ namespace Globe_Script.ViewModel
         #endregion
 
         #region #method edit command
-        public async void edit()
-        {
-            await Task.Run(() => load());
-            sendKey("5");
-
-            await Task.Run(() => load());
-            sendKey($"{index + 1}");
-
-            await Task.Run(() => load());
+        public void edit()
+        {             
+            sendKey("5");             
+            sendKey($"{index + 1}");             
             sendKey("[");
-
-            await Task.Run(() => load());
             sendKey("'");
-
-            await Task.Run(() => load());
-            sendKey("FF34/" + Cost);
-
-            await Task.Run(() => load());
+            sendKey("FF34/" + Cost);             
             sendKey("{ENTER}");
 
-            await Task.Run(() => load());
-            sendKey("5");
 
-            await Task.Run(() => load());
-            sendKey($"{index + 2}");
+            if (!string.IsNullOrWhiteSpace(WorkID))
+            {
+                sendKey("5");
+                if (Remarks.Contains("Work"))
+                {
+                    sendKey($"{workIndex + 1}");
+                    sendKey("[");
+                }
 
-            await Task.Run(() => load());
-            sendKey("[");
-
-            await Task.Run(() => load());
-            sendKey("'");
-
-            await Task.Run(() => load());
-            sendKey("FF35/" + WorkID);
-
-            await Task.Run(() => load());
+                sendKey("'");
+                sendKey("FF35/" + WorkID);
+                sendKey("{ENTER}");
+            }
+             
+            sendKey("5");            
+            sendKey($"{index + 2}");             
+            sendKey("[");            
+            sendKey("'");             
+            sendKey("FF36/" + Trip);            
             sendKey("{ENTER}");
-
-            await Task.Run(() => load());
-            sendKey("5");
-
-            await Task.Run(() => load());
-            sendKey($"{index + 3}");
-
-            await Task.Run(() => load());
-            sendKey("[");
-
-            await Task.Run(() => load());
-            sendKey("'");
-
-            await Task.Run(() => load());
-            sendKey("FF36/" + Trip);
-
-            await Task.Run(() => load());
+             
+            sendKey("5");             
+            sendKey($"{index + 3}");             
+            sendKey("[");             
+            sendKey("'");             
+            sendKey("FF37/" + RqID);             
             sendKey("{ENTER}");
-
-            await Task.Run(() => load());
-            sendKey("5");
-
-            await Task.Run(() => load());
-            sendKey($"{index + 4}");
-
-            await Task.Run(() => load());
-            sendKey("[");
-
-            await Task.Run(() => load());
-            sendKey("'");
-
-            await Task.Run(() => load());
-            sendKey("FF37/" + RqID);
-
-            await Task.Run(() => load());
+             
+            sendKey("5");             
+            sendKey($"{poIndex + 1}");             
+            sendKey("[");             
+            sendKey("'");             
+            sendKey("PO/" + RqID);             
             sendKey("{ENTER}");
-
-            await Task.Run(() => load());
-            sendKey("5");
-
-            await Task.Run(() => load());
-            sendKey($"{poIndex + 1}");
-
-            await Task.Run(() => load());
-            sendKey("[");
-
-            await Task.Run(() => load());
-            sendKey("'");
-
-            await Task.Run(() => load());
-            sendKey("PO/" + RqID);
-
-            await Task.Run(() => load());
-            sendKey("{ENTER}");
-
-            await Task.Run(() => load());
-            sendKey("6");
-
-            await Task.Run(() => load());
-            sendKey(AgentName);
-
-            await Task.Run(() => load());
+             
+            sendKey("6");             
+            sendKey(AgentName);             
             sendKey("{ENTER}");
 
             evaluateForError("edit");
@@ -614,7 +512,7 @@ namespace Globe_Script.ViewModel
 
         public bool CommandInsert_CanExecute()
         {
-            if (string.IsNullOrWhiteSpace(Cost) || string.IsNullOrWhiteSpace(WorkID) || string.IsNullOrWhiteSpace(Trip) || string.IsNullOrWhiteSpace(RqID) || string.IsNullOrWhiteSpace(AgentName))
+            if (string.IsNullOrWhiteSpace(Cost) || string.IsNullOrWhiteSpace(Trip) || string.IsNullOrWhiteSpace(RqID) || string.IsNullOrWhiteSpace(AgentName))
                 return false;
             else
                 return true;
@@ -624,80 +522,92 @@ namespace Globe_Script.ViewModel
 
         #region #Evaluate Input
 
-        public async void evaluateForError(string action)
+        public void getClipboard_Text()
         {
-            await Task.Run(() => loadChecker());
-            sendKey("^{down}");
+            string clipboardText = Clipboard.GetText();
+            string[] data = clipboardText.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
-            await Task.Run(() => loadChecker());
-            sendKey("^{up}");
-            await Task.Run(() => loadChecker());
-            sendKey("^{up}");
-            await Task.Run(() => loadChecker());
-            sendKey("^{up}");
-            await Task.Run(() => loadChecker());
-            sendKey("^{up}");
-            await Task.Run(() => loadChecker());
-            sendKey("^{up}");
-            await Task.Run(() => loadChecker());
-            sendKey("^{up}");
-            await Task.Run(() => loadChecker());
-            sendKey("^{up}");
-            await Task.Run(() => loadChecker());
-            sendKey("^{up}");
-            await Task.Run(() => loadChecker());
-            sendKey("^{up}");
-            await Task.Run(() => loadChecker());
-            sendKey("^{up}");
-            await Task.Run(() => loadChecker());
-            sendKey("^{up}");
-            await Task.Run(() => loadChecker());
-            sendKey("^{up}");
-
-            await Task.Run(() => loadChecker());
-            sendKey("^c");
-
-            await Task.Run(() => loadChecker());
-            sendKey("^c");
-
-            await Task.Run(() => loadChecker());
-
-            if (Clipboard.GetData(DataFormats.Text).ToString().Contains("FORMAT") ||
-                 Clipboard.GetData(DataFormats.Text).ToString().Contains("ITEM") ||
-                 Clipboard.GetData(DataFormats.Text).ToString().Contains("SUCH") ||
-                 Clipboard.GetData(DataFormats.Text).ToString().Contains("NO") ||
-                 Clipboard.GetData(DataFormats.Text).ToString().Contains("BGNG") ||
-                 Clipboard.GetData(DataFormats.Text).ToString().Contains("CHECK") ||
-                 Clipboard.GetData(DataFormats.Text).ToString().Contains("ENTRY") ||
-                 Clipboard.GetData(DataFormats.Text).ToString().Contains("INVALID") ||
-                 Clipboard.GetData(DataFormats.Text).ToString().Contains("FRMT") ||
-                 Clipboard.GetData(DataFormats.Text).ToString().Contains("CODE") ||
-                 Clipboard.GetData(DataFormats.Text).ToString().Contains("ACTION"))
+            bool hasError = false;
+            for (int i = 0; i < data.Length; i++)
             {
+                if (data[i].Contains("FORMAT"))
+                    hasError = true;
+                else if (data[i].Contains(".ITEM"))
+                    hasError = true;
+                else if (data[i].Contains("ITEM."))
+                    hasError = true;
+                else if (data[i].Contains("ITEM"))
+                    hasError = true;
+                else if (data[i].Contains("SUCH"))
+                    hasError = true;
+                else if (data[i].Contains(".NO"))
+                    hasError = true;
+                else if (data[i].Contains("BGNG"))
+                    hasError = true;
+                else if (data[i].Contains("CHECK"))
+                    hasError = true;
+                else if (data[i].Contains("ENTRY"))
+                    hasError = true;
+                else if (data[i].Contains("INVALID"))
+                    hasError = true;
+                else if (data[i].Contains(".FRMT"))
+                    hasError = true;
+                else if (data[i].Contains("FRMT"))
+                    hasError = true;
+                else if (data[i].Contains("FRMT."))
+                    hasError = true;
+                else if (data[i].Contains(".NOT"))
+                    hasError = true;
+                else if (data[i].Contains("CODE"))
+                    hasError = true;
+                else if (data[i].Contains("ACTION"))
+                    hasError = true;
+                else if (data[i].Contains("‡CARRIER"))
+                    hasError = true;
+                else if (data[i].Contains("‡FORMAT"))
+                    hasError = true;
+                else if (data[i].Contains(".FRMT."))
+                    hasError = true;
+            }
 
-
-                Application.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => {
-                    MessageBox.Show(Application.Current.MainWindow, "Error Found ! trying to re-input..");
+            if (hasError == true)
+            {
+                Application.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() =>
+                {
+                    Process process = Process.GetProcessesByName("Globe Script").FirstOrDefault();
+                    bool success = SetForegroundWindow(process.MainWindowHandle);
+                    
+                    MessageBoxResult result = MessageBox.Show(Application.Current.MainWindow, "Error Found ! trying to Re-input...", "Error", MessageBoxButton.YesNo, MessageBoxImage.Error);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        IgnoreRetrieve();
+                        if (action == "submit")
+                            submit();
+                        else
+                            edit();
+                    }
+                    IsVisible = Visibility.Collapsed;
                 }));
-
-                await Task.Run(() => loadChecker());
-                sendKey("{ESC} {ESC} {ESC} {ESC} {ESC} {ESC} {ESC} {ESC} {ESC} {ESC} {ESC} {ESC} {ESC} {ESC}");
-
-                await Task.Run(() => loadChecker());
-                IgnoreRetrieve();
-
-                if (action == "submit")
-                    submit();
-                else
-                    edit();
             }
             else
-            {
-                await Task.Run(() => loadChecker());
-                sendKey("{ESC} {ESC} {ESC} {ESC} {ESC} {ESC} {ESC} {ESC} {ESC} {ESC} {ESC} {ESC} {ESC} {ESC}");
+                Task.Run(() => SavePnr());
+        }
 
-                SavePnr();
-            }
+        public async void evaluateForError(string action)
+        {
+            this.action = action;
+
+            InputChecker checker = new InputChecker();
+            await Task.Run(() => checker.RunChecker());
+
+            await Task.Run(() =>
+            {
+                Task.Delay(1000).Wait();
+
+                Thread thread = new Thread(new System.Threading.ThreadStart(getClipboard_Text));
+                thread.SetApartmentState(ApartmentState.STA);
+                thread.Start();
+            });
         }
         #endregion
 

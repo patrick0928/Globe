@@ -426,8 +426,8 @@ namespace Globe_Script
             try
             {
                 string _endpoint = this.Endpoint(_type);
-                //var request = (HttpWebRequest)WebRequest.Create(_endpoint);
-                var request = (HttpWebRequest)WebRequest.Create("http://203.160.184.51:91/sabreapi/pnr/retrieve/HDDXFX");
+                var request = (HttpWebRequest)WebRequest.Create(_endpoint);
+                //var request = (HttpWebRequest)WebRequest.Create("http://203.160.184.51:91/sabreapi/pnr/retrieve/HDDXFX");
                 var postData = _postdata;
                 var data = Encoding.ASCII.GetBytes(postData);
                 

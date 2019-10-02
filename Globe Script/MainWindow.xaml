@@ -5,9 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Globe_Script"
         xmlns:gif="http://wpfanimatedgif.codeplex.com"
-        Icon="img\GlobeLogo.ico"
+        Icon="img\globe.ico"
         mc:Ignorable="d"
-        Title="GLOBE SCRIPT" Height="520" Width="350" MinWidth="350" MinHeight="500" WindowStartupLocation="CenterScreen">
+        Title="GLOBE SCRIPT" Height="550" Width="350" MinWidth="350" MinHeight="525" WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
         <Style x:Key="Button_Style" TargetType="Button">
@@ -70,7 +70,8 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="100"/>
                             <RowDefinition Height="*"/>
-                            <RowDefinition Height="100"/>
+                            <RowDefinition Height="80"/>
+                            <RowDefinition Height="90"/>
                         </Grid.RowDefinitions>
 
                         <GroupBox Header="Receive From" Margin="20 10 20 0" Padding="0" Grid.Row="0" Grid.ColumnSpan="2" BorderBrush="#FF267FFF">
@@ -91,7 +92,7 @@
                             </Grid>
                         </GroupBox>
 
-                        <GroupBox Header="Remarks" Margin="20 10 20 0" BorderBrush="#FF267FFF" Grid.Row="1" >
+                        <GroupBox Header="Mandatory Remarks" Margin="20 10 20 0" BorderBrush="#FF267FFF" Grid.Row="1" >
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="84"/>
@@ -100,21 +101,36 @@
 
                                 <StackPanel  Margin="0 10 0 0" >
                                     <TextBlock Text="Cost Center" Margin="0 7" HorizontalAlignment="Right"/>
-                                    <TextBlock Text="ID Work Order" Margin="0 10" HorizontalAlignment="Right"/>
                                     <TextBlock Text="Purpose of Trip" Margin="0 6" HorizontalAlignment="Right"/>
                                     <TextBlock Text="Request ID" Margin="0 10" HorizontalAlignment="Right"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="1" Margin="0 10 0 0">
                                     <TextBox Margin="10 5 40 5" IsEnabled="{Binding IsEnable}" MaxLength="50" Text="{Binding Cost, UpdateSourceTrigger=PropertyChanged}"/>
-                                    <TextBox Margin="10 5 40 5" IsEnabled="{Binding IsEnable}" MaxLength="50" Text="{Binding WorkID, UpdateSourceTrigger=PropertyChanged}"/>
                                     <TextBox Margin="10 5 40 5" IsEnabled="{Binding IsEnable}" MaxLength="50" Text="{Binding Trip, UpdateSourceTrigger=PropertyChanged}"/>
                                     <TextBox Margin="10 5 40 5" IsEnabled="{Binding IsEnable}" MaxLength="50" Text="{Binding RqID, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                             </Grid>
                         </GroupBox>
 
-                        <StackPanel Grid.Row="2" Grid.ColumnSpan="2">
+                        <GroupBox Header="Optional Remarks" Margin="20 10 20 0" BorderBrush="#FF267FFF" Grid.Row="2" >
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="84"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel  Margin="0 10 0 0" >
+                                    <TextBlock Text="ID Work Order" Margin="0 10" HorizontalAlignment="Right"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Margin="0 10 0 0">
+                                    <TextBox Margin="10 5 40 5" IsEnabled="{Binding IsEnable}" MaxLength="50" Text="{Binding WorkID, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                            </Grid>
+                        </GroupBox>
+                        
+                        <StackPanel Grid.Row="3" Grid.ColumnSpan="2">
                             <Button Content="Submit" Margin="90 15 90 0" Style="{StaticResource Button_Style}" Command="{Binding SubmitCommand}"/>
                             <!--<Button Content="Ignore" Margin="80 7 120 0" Style="{StaticResource Button_Style}" Background="#FFE23232" Command="{Binding UndoCommand}"/>-->
                             <!--<Button Content="Save Pnr" Margin="90 7 90 0" Style="{StaticResource Button_Style}" Command="{Binding SaveCommand}"/>-->
